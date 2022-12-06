@@ -4,6 +4,7 @@ namespace Swaggest\JsonDiff\Tests;
 
 
 use Swaggest\JsonDiff\Exception;
+use Swaggest\JsonDiff\JsonDiff;
 use Swaggest\JsonDiff\JsonPointer;
 use Swaggest\JsonDiff\JsonPointerException;
 
@@ -18,7 +19,7 @@ class JsonPointerTest extends \PHPUnit_Framework_TestCase
         JsonPointer::add($json, ['l1', 'l2', 'l3'], 'hello!');
         $this->assertSame('{"l1":{"l2":{"l3":"hello!"}}}', json_encode($json));
 
-        JsonPointer::add($json, ['l1', 'l2', 'l3'], 'hello again!', JsonPointer::SKIP_IF_ISSET);
+        JsonPointer::add($json, ['l1', 'l2', 'l3'], 'hello again!', JsonDiff::SKIP_IF_ISSET);
         $this->assertSame('{"l1":{"l2":{"l3":"hello!"}}}', json_encode($json));
 
         JsonPointer::add($json, ['l1', 'l2', 'l3'], 'hello again!');

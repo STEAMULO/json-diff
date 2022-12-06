@@ -45,6 +45,21 @@ class JsonDiff
      */
     const COLLECT_MODIFIED_DIFF = 64;
 
+    /**
+     * Create intermediate keys if they don't exist
+     */
+    const RECURSIVE_KEY_CREATION = 128;
+
+    /**
+     * Disallow converting empty array to object for key creation
+     */
+    const STRICT_MODE = 256;
+
+    /**
+     * Skip action if holder already has a non-null value at path
+     */
+    const SKIP_IF_ISSET = 512;
+
 
     private $options = 0;
 
@@ -285,11 +300,11 @@ class JsonDiff
                     $this->jsonPatch->op(new Replace($this->path, $new));
                 }
 
-                JsonPointer::add($this->modifiedOriginal, $this->pathItems, $original);
-                JsonPointer::add($this->modifiedNew, $this->pathItems, $new);
+                JsonPointer::add($this->modifiedOriginal, $this->pathItems, $original, $this->options);
+                JsonPointer::add($this->modifiedNew, $this->pathItems, $new, $this->options);
 
                 if ($merge) {
-                    JsonPointer::add($this->merge, $this->pathItems, $new, JsonPointer::RECURSIVE_KEY_CREATION);
+                    JsonPointer::add($this->merge, $this->pathItems, $new, $this->options | self::RECURSIVE_KEY_CREATION);
                 }
 
                 if ($this->options & self::COLLECT_MODIFIED_DIFF) {
@@ -315,10 +330,10 @@ class JsonDiff
 
         if ($merge && is_array($new) && !is_array($original)) {
             $merge = false;
-            JsonPointer::add($this->merge, $this->pathItems, $new);
+            JsonPointer::add($this->merge, $this->pathItems, $new, $this->options);
         } elseif ($merge && $new instanceof \stdClass && !$original instanceof \stdClass) {
             $merge = false;
-            JsonPointer::add($this->merge, $this->pathItems, $new);
+            JsonPointer::add($this->merge, $this->pathItems, $new, $this->options);
         }
 
         $isUriFragment = (bool)($this->options & self::JSON_URI_FRAGMENT_ID);
@@ -356,9 +371,9 @@ class JsonDiff
                     $this->jsonPatch->op(new Remove($this->path));
                 }
 
-                JsonPointer::add($this->removed, $this->pathItems, $originalValue);
+                JsonPointer::add($this->removed, $this->pathItems, $originalValue, $this->options);
                 if ($merge) {
-                    JsonPointer::add($this->merge, $this->pathItems, null);
+                    JsonPointer::add($this->merge, $this->pathItems, null, $this->options);
                 }
 
             }
@@ -367,7 +382,7 @@ class JsonDiff
         }
 
         if ($merge && $isArray && $this->addedCnt + $this->modifiedCnt + $this->removedCnt > $diffCnt) {
-            JsonPointer::add($this->merge, $this->pathItems, $new);
+            JsonPointer::add($this->merge, $this->pathItems, $new, $this->options);
         }
 
         // additions
@@ -380,9 +395,9 @@ class JsonDiff
             $path = $this->path . '/' . JsonPointer::escapeSegment($key, $isUriFragment);
             $pathItems = $this->pathItems;
             $pathItems[] = $key;
-            JsonPointer::add($this->added, $pathItems, $value);
+            JsonPointer::add($this->added, $pathItems, $value, $this->options);
             if ($merge) {
-                JsonPointer::add($this->merge, $pathItems, $value);
+                JsonPointer::add($this->merge, $pathItems, $value, $this->options);
             }
 
             $this->addedPaths [] = $path;
